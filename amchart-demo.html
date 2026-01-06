@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>AmCharts Demo Page</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- AmCharts 5 -->
+  <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
+  <script src="https://cdn.amcharts.com/lib/5/xy.js"></script>
+  <script src="https://cdn.amcharts.com/lib/5/percent.js"></script>
+  <script src="https://cdn.amcharts.com/lib/5/themes/Dark.js"></script>
+
+  <style>
+    body {
+      margin: 0;
+      background: #0f172a;
+      color: white;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    header {
+      padding: 20px;
+      background: linear-gradient(135deg, #2563eb, #7c3aed);
+      font-size: 22px;
+      font-weight: bold;
+    }
+
+    .wrap {
+      max-width: 1200px;
+      margin: 30px auto;
+      padding: 10px;
+    }
+
+    .chart-box {
+      background: #111827;
+      border-radius: 12px;
+      padding: 18px;
+      margin-bottom: 25px;
+      border: 1px solid #334155;
+    }
+
+    .title {
+      margin-bottom: 10px;
+      color: #a5b4fc;
+      font-size: 18px;
+    }
+
+    .chart-area {
+      width: 100%;
+      height: 350px;
+      border-radius: 10px;
+    }
+
+    footer {
+      text-align: center;
+      color: #9ca3af;
+      margin: 40px 0;
+      font-size: 13px;
+    }
+  </style>
+</head>
+
+<body>
+
+<header>
+  AmCharts Demo Dashboard
+</header>
+
+<div class="wrap">
+
+  <div class="chart-box">
+    <div class="title">📊 Bar Chart</div>
+    <div id="barChart" class="chart-area"></div>
+  </div>
+
+  <div class="chart-box">
+    <div class="title">📈 Line Chart</div>
+    <div id="lineChart" class="chart-area"></div>
+  </div>
+
+  <div class="chart-box">
+    <div class="title">🍩 Donut Chart</div>
+    <div id="donutChart" class="chart-area"></div>
+  </div>
+
+</div>
+
+<footer>
+  Made with ❤️ using amCharts
+</footer>
+
+<script>
+  // ===== THEME =====
+  am5.ready(function () {
+    let root1 = am5.Root.new("barChart");
+    root1.setThemes([am5themes_Dark.new(root1)]);
+    let chart1 = root1.container.children.push(
+      am5xy.XYChart.new(root1, { layout: root1.verticalLayout })
+    );
+
+    let xAxis1 = chart1.xAxes.push(
+      am5xy.CategoryAxis.new(root1, {
+        categoryField: "category",
+        renderer: am5xy.AxisRendererX.new(root1, {})
+      })
+    );
+
+    let yAxis1 = chart1.yAxes.push(
+      am5xy.ValueAxis.new(root1, {
+        renderer: am5xy.AxisRendererY.new(root1, {})
+      })
+    );
+
+    let series1 = chart1.series.push(
+      am5xy.ColumnSeries.new(root1, {
+        xAxis: xAxis1,
+        yAxis: yAxis1,
+        valueField: "value",
+        categoryField: "category"
+      })
+    );
+
+    let barData = [
+      { category: "A", value: 10 },
+      { category: "B", value: 25 },
+      { category: "C", value: 18 },
+      { category: "D", value: 30 },
+    ];
+
+    xAxis1.data.setAll(barData);
+    series1.data.setAll(barData);
+
+    // ===== Line Chart =====
+    let root2 = am5.Root.new("lineChart");
+    root2.setThemes([am5themes_Dark.new(root2)]);
+    let chart2 = root2.container.children.push(am5xy.XYChart.new(root2, {}));
+
+    let xAxis2 = chart2.xAxes.push(
+      am5xy.CategoryAxis.new(root2, {
+        categoryField: "month",
+        renderer: am5xy.AxisRendererX.new(root2, {})
+      })
+    );
+
+    let yAxis2 = chart2.yAxes.push(
+      am5xy.ValueAxis.new(root2, {
+        renderer: am5xy.AxisRendererY.new(root2, {})
+      })
+    );
+
+    let series2 = chart2.series.push(
+      am5xy.LineSeries.new(root2, {
+        xAxis: xAxis2,
+        yAxis: yAxis2,
+        valueField: "value",
+        categoryField: "month"
+      })
+    );
+
+    let lineData = [
+      { month: "Jan", value: 5 },
+      { month: "Feb", value: 8 },
+      { month: "Mar", value: 15 },
+      { month: "Apr", value: 12 },
+      { month: "May", value: 20 },
+    ];
+
+    xAxis2.data.setAll(lineData);
+    series2.data.setAll(lineData);
+
+    // ===== Donut Chart =====
+    let root3 = am5.Root.new("donutChart");
+    root3.setThemes([am5themes_Dark.new(root3)]);
+    let chart3 = root3.container.children.push(
+      am5percent.PieChart.new(root3, {
+        innerRadius: am5.percent(60)
+      })
+    );
+
+    let series3 = chart3.series.push(
+      am5percent.PieSeries.new(root3, {
+        valueField: "value",
+        categoryField: "name"
+      })
+    );
+
+    let donutData = [
+      { name: "Apple", value: 40 },
+      { name: "Samsung", value: 30 },
+      { name: "LG", value: 20 },
+      { name: "Other", value: 10 },
+    ];
+
+    series3.data.setAll(donutData);
+  });
+</script>
+
+</body>
+</html>
