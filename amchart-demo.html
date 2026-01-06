@@ -7,6 +7,7 @@
 <!-- amCharts 5 -->
 <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
 <script src="https://cdn.amcharts.com/lib/5/xy.js"></script>
+<script src="https://cdn.amcharts.com/lib/5/percent.js"></script>
 <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
 
 <style>
@@ -29,6 +30,20 @@ body{
 
 .sidebar h2{
   margin-top:0;
+}
+
+.menu{
+  margin-top:30px;
+}
+
+.menu p{
+  cursor:pointer;
+  padding:8px;
+  border-radius:5px;
+}
+
+.menu p:hover{
+  background:#2f2f44;
 }
 
 .content{
@@ -54,9 +69,12 @@ body{
 
   <div class="sidebar">
     <h2>📊 Dashboard</h2>
-    <p>- 차트 1</p>
-    <p>- 차트 2</p>
-    <p>- 차트 3</p>
+
+    <div class="menu">
+      <p onclick="showBar()">차트 1 - Bar</p>
+      <p onclick="showLine()">차트 2 - Line</p>
+      <p onclick="showPie()">차트 3 - Pie</p>
+    </div>
   </div>
 
   <div class="content">
@@ -66,55 +84,115 @@ body{
 
 </div>
 
-
 <script>
-am5.ready(function() {
+let root;
+let chart;
 
-  var root = am5.Root.new("chartdiv");
+// 기본 데이터
+const data = [
+  { category: "A", value: 50 },
+  { category: "B", value: 80 },
+  { category: "C", value: 30 }
+];
 
-  root.setThemes([
-    am5themes_Animated.new(root)
-  ]);
+// root 초기화 함수
+function initChart() {
+  if(root){ root.dispose(); }
+  root = am5.Root.new("chartdiv");
+  root.setThemes([am5themes_Animated.new(root)]);
+}
 
-  var chart = root.container.children.push(
+// ▶️ Bar Chart
+function showBar(){
+  initChart();
+
+  let chart = root.container.children.push(
     am5xy.XYChart.new(root, {})
   );
 
-  var xAxis = chart.xAxes.push(
+  let xAxis = chart.xAxes.push(
     am5xy.CategoryAxis.new(root, {
-      maxDeviation: 0.3,
       renderer: am5xy.AxisRendererX.new(root, {}),
       categoryField: "category"
     })
   );
 
-  var yAxis = chart.yAxes.push(
+  let yAxis = chart.yAxes.push(
     am5xy.ValueAxis.new(root, {
       renderer: am5xy.AxisRendererY.new(root, {})
     })
   );
 
-  var series = chart.series.push(
+  let series = chart.series.push(
     am5xy.ColumnSeries.new(root, {
-      name: "Series",
-      xAxis: xAxis,
-      yAxis: yAxis,
-      valueYField: "value",
-      categoryXField: "category"
+      xAxis,
+      yAxis,
+      categoryXField:"category",
+      valueYField:"value"
     })
   );
 
-  var data = [
-    { category: "A", value: 50 },
-    { category: "B", value: 80 },
-    { category: "C", value: 30 }
-  ];
+  xAxis.data.setAll(data);
+  series.data.setAll(data);
+}
+
+// ▶️ Line Chart
+function showLine(){
+  initChart();
+
+  let chart = root.container.children.push(
+    am5xy.XYChart.new(root, {})
+  );
+
+  let xAxis = chart.xAxes.push(
+    am5xy.CategoryAxis.new(root, {
+      renderer: am5xy.AxisRendererX.new(root, {}),
+      categoryField: "category"
+    })
+  );
+
+  let yAxis = chart.yAxes.push(
+    am5xy.ValueAxis.new(root, {
+      renderer: am5xy.AxisRendererY.new(root, {})
+    })
+  );
+
+  let series = chart.series.push(
+    am5xy.LineSeries.new(root, {
+      xAxis,
+      yAxis,
+      categoryXField:"category",
+      valueYField:"value",
+      strokeWidth:3
+    })
+  );
 
   xAxis.data.setAll(data);
   series.data.setAll(data);
+}
 
-});
+// ▶️ Pie Chart
+function showPie(){
+  initChart();
+
+  let chart = root.container.children.push(
+    am5percent.PieChart.new(root, {})
+  );
+
+  let series = chart.series.push(
+    am5percent.PieSeries.new(root, {
+      valueField:"value",
+      categoryField:"category"
+    })
+  );
+
+  series.data.setAll(data);
+}
+
+// 처음 실행 시 Bar Chart 보여줌
+showBar();
 </script>
 
 </body>
 </html>
+
