@@ -86,23 +86,19 @@ body{
 
 <script>
 let root;
-let chart;
-
-// 기본 데이터
 const data = [
   { category: "A", value: 50 },
   { category: "B", value: 80 },
   { category: "C", value: 30 }
 ];
 
-// root 초기화 함수
-function initChart() {
+function initChart(){
   if(root){ root.dispose(); }
   root = am5.Root.new("chartdiv");
   root.setThemes([am5themes_Animated.new(root)]);
 }
 
-// ▶️ Bar Chart
+/* ---------------- BAR ---------------- */
 function showBar(){
   initChart();
 
@@ -113,7 +109,7 @@ function showBar(){
   let xAxis = chart.xAxes.push(
     am5xy.CategoryAxis.new(root, {
       renderer: am5xy.AxisRendererX.new(root, {}),
-      categoryField: "category"
+      categoryField:"category"
     })
   );
 
@@ -132,11 +128,27 @@ function showBar(){
     })
   );
 
+  // ⭐ BAR TOOLTIP 디자인
+  let tooltip = series.get("tooltip");
+  tooltip.get("background").setAll({
+    fill: am5.color(0x2b2d42),
+    stroke: am5.color(0xffffff),
+    strokeWidth: 1,
+    cornerRadius: 12
+  });
+
+  tooltip.label.setAll({
+    text: "[fontSize:16px bold]{categoryX}[/]\n[fontSize:14px]Value: {valueY}[/]",
+    fill: am5.color(0xffffff),
+    centerX: 0,
+    centerY: 0
+  });
+
   xAxis.data.setAll(data);
   series.data.setAll(data);
 }
 
-// ▶️ Line Chart
+/* ---------------- LINE ---------------- */
 function showLine(){
   initChart();
 
@@ -147,7 +159,7 @@ function showLine(){
   let xAxis = chart.xAxes.push(
     am5xy.CategoryAxis.new(root, {
       renderer: am5xy.AxisRendererX.new(root, {}),
-      categoryField: "category"
+      categoryField:"category"
     })
   );
 
@@ -167,11 +179,26 @@ function showLine(){
     })
   );
 
+  // ⭐ LINE TOOLTIP 예쁜 스타일
+  let tooltip = series.get("tooltip");
+  tooltip.get("background").setAll({
+    fill: am5.color(0xffffff),
+    stroke: am5.color(0x4a90e2),
+    strokeWidth: 2,
+    cornerRadius: 10
+  });
+
+  tooltip.label.setAll({
+    text: "✨ {categoryX}\nValue: {valueY}",
+    fill: am5.color(0x000000),
+    fontSize: 14
+  });
+
   xAxis.data.setAll(data);
   series.data.setAll(data);
 }
 
-// ▶️ Pie Chart
+/* ---------------- PIE ---------------- */
 function showPie(){
   initChart();
 
@@ -186,10 +213,24 @@ function showPie(){
     })
   );
 
+  // ⭐ PIE TOOLTIP
+  let tooltip = series.get("tooltip");
+  tooltip.get("background").setAll({
+    fill: am5.color(0x1e88e5),
+    stroke: am5.color(0xffffff),
+    strokeWidth: 2,
+    cornerRadius: 14
+  });
+
+  tooltip.label.setAll({
+    text: "[fontSize:16px bold]{category}[/]\n📈 {value}",
+    fill: am5.color(0xffffff),
+    textAlign:"center"
+  });
+
   series.data.setAll(data);
 }
 
-// 처음 실행 시 Bar Chart 보여줌
 showBar();
 </script>
 
