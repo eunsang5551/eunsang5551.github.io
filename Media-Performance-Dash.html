@@ -10,6 +10,9 @@
   <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
 
   <style>
+    body {
+      font-family: Arial, sans-serif;
+    }
     #chartdiv {
       width: 100%;
       height: 600px;
@@ -18,26 +21,29 @@
 </head>
 
 <body>
-  <h2 style="text-align:center;">언론사 최초보도 vs 후속보도</h2>
+  <h2 style="text-align:center;">성과도 비교</h2>
   <div id="chartdiv"></div>
 
   <script>
-    /* ===== 프록시 적용 API ===== */
+    /* ===============================
+       API (swagger.json 기준)
+       =============================== */
+
     const API_URL =
       "https://cors-anywhere.herokuapp.com/http://dev-web-api.newssalad.com:8083/analysis/press/total";
 
     fetch(API_URL)
       .then(res => res.json())
       .then(json => {
-        const chartData = json.data.map(item => ({
-          press: item.press,
-          first: item.parentsNewsCnt,
-          follow: item.sonNewsCnt
+        const data = json.data.map(item => ({
+          press: item.press,                 // 언론사명
+          first: item.parentsNewsCnt,        // 최초보도
+          follow: item.sonNewsCnt            // 후속보도
         }));
 
-        drawChart(chartData);
+        drawChart(data);
       })
-      .catch(err => console.error("API ERROR:", err));
+      .catch(err => console.error("FETCH ERROR:", err));
 
     function drawChart(data) {
 
@@ -56,7 +62,9 @@
           })
         );
 
-        /* X Axis */
+        /* ===============================
+           X Axis (언론사)
+           =============================== */
         const xAxis = chart.xAxes.push(
           am5xy.CategoryAxis.new(root, {
             categoryField: "press",
@@ -67,15 +75,19 @@
         );
         xAxis.data.setAll(data);
 
-        /* Y Axis */
+        /* ===============================
+           Y Axis (건수)
+           =============================== */
         const yAxis = chart.yAxes.push(
           am5xy.ValueAxis.new(root, {
             renderer: am5xy.AxisRendererY.new(root, {})
           })
         );
 
-        /* 최초보도 */
-        const series1 = chart.series.push(
+        /* ===============================
+           최초보도 시리즈
+           =============================== */
+        const firstSeries = chart.series.push(
           am5xy.ColumnSeries.new(root, {
             name: "최초보도",
             xAxis: xAxis,
@@ -85,16 +97,16 @@
             clustered: true
           })
         );
-        series1.data.setAll(data);
+        firstSeries.data.setAll(data);
 
-        series1.columns.template.setAll({
+        firstSeries.columns.template.setAll({
           fill: am5.color(0x4e79a7),
           stroke: am5.color(0x4e79a7),
           cornerRadiusTL: 6,
           cornerRadiusTR: 6
         });
 
-        series1.bullets.push(() =>
+        firstSeries.bullets.push(() =>
           am5.Bullet.new(root, {
             sprite: am5.Label.new(root, {
               text: "{valueY}",
@@ -106,8 +118,10 @@
           })
         );
 
-        /* 후속보도 */
-        const series2 = chart.series.push(
+        /* ===============================
+           후속보도 시리즈
+           =============================== */
+        const followSeries = chart.series.push(
           am5xy.ColumnSeries.new(root, {
             name: "후속보도",
             xAxis: xAxis,
@@ -117,16 +131,16 @@
             clustered: true
           })
         );
-        series2.data.setAll(data);
+        followSeries.data.setAll(data);
 
-        series2.columns.template.setAll({
+        followSeries.columns.template.setAll({
           fill: am5.color(0xf28e2b),
           stroke: am5.color(0xf28e2b),
           cornerRadiusTL: 6,
           cornerRadiusTR: 6
         });
 
-        series2.bullets.push(() =>
+        followSeries.bullets.push(() =>
           am5.Bullet.new(root, {
             sprite: am5.Label.new(root, {
               text: "{valueY}",
@@ -138,7 +152,9 @@
           })
         );
 
-        /* Legend */
+        /* ===============================
+           Legend
+           =============================== */
         const legend = chart.children.push(
           am5.Legend.new(root, {
             centerX: am5.p50,
