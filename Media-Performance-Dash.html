@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="ko">
 <head>
   <meta charset="utf-8" />
   <title>Media Performance Dash</title>
@@ -22,15 +22,14 @@
   <div id="chartdiv"></div>
 
   <script>
-    const API_URL = "http://dev-web-api.newssalad.com:8083/document/analysis/press/total";
+    /* ===== 프록시 적용 API ===== */
+    const API_URL =
+      "https://cors-anywhere.herokuapp.com/http://dev-web-api.newssalad.com:8083/analysis/press/total";
 
     fetch(API_URL)
       .then(res => res.json())
       .then(json => {
-        const raw = json.data;
-
-        // ---- 데이터 변환 ----
-        const chartData = raw.map(item => ({
+        const chartData = json.data.map(item => ({
           press: item.press,
           first: item.parentsNewsCnt,
           follow: item.sonNewsCnt
@@ -38,19 +37,16 @@
 
         drawChart(chartData);
       })
-      .catch(err => console.error(err));
+      .catch(err => console.error("API ERROR:", err));
 
     function drawChart(data) {
 
       am5.ready(function () {
 
-        var root = am5.Root.new("chartdiv");
+        const root = am5.Root.new("chartdiv");
+        root.setThemes([am5themes_Animated.new(root)]);
 
-        root.setThemes([
-          am5themes_Animated.new(root)
-        ]);
-
-        var chart = root.container.children.push(
+        const chart = root.container.children.push(
           am5xy.XYChart.new(root, {
             panX: false,
             panY: false,
@@ -60,7 +56,8 @@
           })
         );
 
-        var xAxis = chart.xAxes.push(
+        /* X Axis */
+        const xAxis = chart.xAxes.push(
           am5xy.CategoryAxis.new(root, {
             categoryField: "press",
             renderer: am5xy.AxisRendererX.new(root, {
@@ -70,14 +67,15 @@
         );
         xAxis.data.setAll(data);
 
-        var yAxis = chart.yAxes.push(
+        /* Y Axis */
+        const yAxis = chart.yAxes.push(
           am5xy.ValueAxis.new(root, {
             renderer: am5xy.AxisRendererY.new(root, {})
           })
         );
 
-        // ---- 최초보도 ----
-        var series1 = chart.series.push(
+        /* 최초보도 */
+        const series1 = chart.series.push(
           am5xy.ColumnSeries.new(root, {
             name: "최초보도",
             xAxis: xAxis,
@@ -91,23 +89,25 @@
 
         series1.columns.template.setAll({
           fill: am5.color(0x4e79a7),
-          stroke: am5.color(0x4e79a7)
+          stroke: am5.color(0x4e79a7),
+          cornerRadiusTL: 6,
+          cornerRadiusTR: 6
         });
 
-        series1.bullets.push(function () {
-          return am5.Bullet.new(root, {
+        series1.bullets.push(() =>
+          am5.Bullet.new(root, {
             sprite: am5.Label.new(root, {
               text: "{valueY}",
-              centerY: am5.p50,
-              centerX: am5.p50,
               populateText: true,
+              centerX: am5.p50,
+              centerY: am5.p50,
               fill: am5.color(0xffffff)
             })
-          });
-        });
+          })
+        );
 
-        // ---- 후속보도 ----
-        var series2 = chart.series.push(
+        /* 후속보도 */
+        const series2 = chart.series.push(
           am5xy.ColumnSeries.new(root, {
             name: "후속보도",
             xAxis: xAxis,
@@ -121,27 +121,35 @@
 
         series2.columns.template.setAll({
           fill: am5.color(0xf28e2b),
-          stroke: am5.color(0xf28e2b)
+          stroke: am5.color(0xf28e2b),
+          cornerRadiusTL: 6,
+          cornerRadiusTR: 6
         });
 
-        series2.bullets.push(function () {
-          return am5.Bullet.new(root, {
+        series2.bullets.push(() =>
+          am5.Bullet.new(root, {
             sprite: am5.Label.new(root, {
               text: "{valueY}",
-              centerY: am5.p50,
-              centerX: am5.p50,
               populateText: true,
+              centerX: am5.p50,
+              centerY: am5.p50,
               fill: am5.color(0xffffff)
             })
-          });
-        });
+          })
+        );
+
+        /* Legend */
+        const legend = chart.children.push(
+          am5.Legend.new(root, {
+            centerX: am5.p50,
+            x: am5.p50
+          })
+        );
+        legend.data.setAll(chart.series.values);
 
         chart.appear(1000, 100);
-
       });
     }
   </script>
 </body>
 </html>
-
-
