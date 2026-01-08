@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8"/>
-<title>언론사/기자 종합 KPI 순위 시각화</title>
+<title>언론사/기자 종합 KPI 차트</title>
 
 <style>
   #chartdiv {
@@ -11,7 +11,6 @@
   }
 </style>
 
-<!-- amCharts -->
 <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
 <script src="https://cdn.amcharts.com/lib/5/xy.js"></script>
 <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
@@ -23,32 +22,44 @@
 <script>
 am5.ready(async function () {
 
-  // ===========================
-  // 🔥 종합 KPI API 호출
-  // ===========================
-  const response = await fetch("http://dev-web-api.newssalad.com:8083/api/performance/summary");
-  const result = await response.json();
+  let chartData = [];
+  let avgValue = 0;
 
-  // ===========================
-  // 🔥 데이터 매핑
-  // (필드명 백엔드 맞춰 수정만 하면 됨)
-  // ===========================
-  const chartData = result.items.map(item => ({
-    name: item.name,                    // 기자명 or 언론사명
-    steps: item.score,                  // 종합 KPI 점수
-    ratio: item.ratio,                  // 평균 대비 %
-    diff: item.diff,                    // 평균 차이
-    pictureSettings: {
-      src: item.imageUrl || "https://www.amcharts.com/wp-content/uploads/2019/04/monica.jpg"
-    }
-  }));
+  try {
+    console.log("📡 KPI API 호출 시도...");
+    const res = await fetch("http://dev-web-api.newssalad.com:8083/api/performance/summary");
+    
+    if (!res.ok) throw new Error("API 응답 에러: " + res.status);
 
-  // 평균값 (툴팁용)
-  const avgValue = result.avgValue;
+    const result = await res.json();
+    console.log("✅ API 응답:", result);
 
-  // ===========================
-  // 차트 생성
-  // ===========================
+    avgValue = result.avgValue || 0;
+
+    chartData = result.items.map(item => ({
+      name: item.name,
+      steps: item.score,
+      ratio: item.ratio,
+      diff: item.diff,
+      pictureSettings: {
+        src: item.imageUrl || "https://www.amcharts.com/wp-content/uploads/2019/04/monica.jpg"
+      }
+    }));
+
+  } catch (err) {
+    console.error("❌ API 호출 실패", err);
+    console.warn("➡️ 더미 데이터로 차트 표시합니다.");
+
+    avgValue = 30000;
+
+    chartData = [
+      { name: "조선일보", steps: 45000, ratio: 130, diff: 15000, pictureSettings:{src:"https://www.amcharts.com/wp-content/uploads/2019/04/ross.jpg"} },
+      { name: "중앙일보", steps: 38000, ratio: 120, diff: 8000, pictureSettings:{src:"https://www.amcharts.com/wp-content/uploads/2019/04/rachel.jpg"} },
+      { name: "한겨레", steps: 24000, ratio: 80, diff: -6000, pictureSettings:{src:"https://www.amcharts.com/wp-content/uploads/2019/04/joey.jpg"} }
+    ];
+  }
+
+  // ======================= CHART =========================
   var root = am5.Root.new("chartdiv");
   root.setThemes([am5themes_Animated.new(root)]);
 
@@ -57,27 +68,21 @@ am5.ready(async function () {
       panX: false,
       panY: false,
       paddingLeft: 0,
-      paddingRight: 30,
-      wheelX: "none",
-      wheelY: "none"
+      paddingRight: 30
     })
   );
 
   var yAxis = chart.yAxes.push(
     am5xy.CategoryAxis.new(root, {
       categoryField: "name",
-      renderer: am5xy.AxisRendererY.new(root, {
-        minorGridEnabled: true
-      })
+      renderer: am5xy.AxisRendererY.new(root, {})
     })
   );
 
   var xAxis = chart.xAxes.push(
     am5xy.ValueAxis.new(root, {
       min: 0,
-      renderer: am5xy.AxisRendererX.new(root, {
-        minGridDistance: 80
-      })
+      renderer: am5xy.AxisRendererX.new(root, {})
     })
   );
 
@@ -88,88 +93,57 @@ am5.ready(async function () {
       yAxis: yAxis,
       valueXField: "steps",
       categoryYField: "name",
-      sequencedInterpolation: true,
-      calculateAggregates: true,
-      maskBullets: false,
       tooltip: am5.Tooltip.new(root, {
-        dy: -30,
-        pointerOrientation: "vertical",
         labelText:
-          "[bold]{name}[/]\n종합 KPI: {valueX}\n평균 대비: {ratio}%\n차이: {diff}\n전체 평균: " + avgValue
+          "{name}\nKPI: {valueX}\n평균 대비: {ratio}%\n차이: {diff}\n전체 평균: " + avgValue
       })
     })
   );
 
   series.columns.template.setAll({
-    strokeOpacity: 0,
-    cornerRadiusBR: 10,
     cornerRadiusTR: 10,
-    cornerRadiusBL: 10,
-    cornerRadiusTL: 10,
-    maxHeight: 55,
+    cornerRadiusBR: 10,
     fillOpacity: 0.9
   });
 
-  // ===========================
-  // 이미지 Bullet
-  // ===========================
   var circleTemplate = am5.Template.new({});
 
   series.bullets.push(function (root, series, dataItem) {
-    var bulletContainer = am5.Container.new(root, {});
-    var circle = bulletContainer.children.push(
-      am5.Circle.new(root, { radius: 34 }, circleTemplate)
+    var container = am5.Container.new(root,{});
+    var circle = container.children.push(am5.Circle.new(root,{radius:34},circleTemplate));
+    var mask = container.children.push(am5.Circle.new(root,{radius:27}));
+
+    var imgBox = container.children.push(
+      am5.Container.new(root,{ mask })
     );
 
-    var maskCircle = bulletContainer.children.push(
-      am5.Circle.new(root, { radius: 27 })
-    );
-
-    var imageContainer = bulletContainer.children.push(
-      am5.Container.new(root, { mask: maskCircle })
-    );
-
-    imageContainer.children.push(
-      am5.Picture.new(root, {
-        templateField: "pictureSettings",
+    imgBox.children.push(
+      am5.Picture.new(root,{
+        templateField:"pictureSettings",
         centerX: am5.p50,
         centerY: am5.p50,
-        width: 60,
-        height: 60
+        width:60,
+        height:60
       })
     );
 
-    return am5.Bullet.new(root, {
-      locationX: 0,
-      sprite: bulletContainer
-    });
+    return am5.Bullet.new(root,{ sprite:container });
   });
 
-  // ===========================
-  // 색상 Heat Rule
-  // ===========================
-  series.set("heatRules", [
-    {
-      dataField: "valueX",
-      min: am5.color(0xe5dc36),
-      max: am5.color(0x5faa46),
-      target: series.columns.template,
-      key: "fill"
-    },
-    {
-      dataField: "valueX",
-      min: am5.color(0xe5dc36),
-      max: am5.color(0x5faa46),
-      target: circleTemplate,
-      key: "fill"
-    }
-  ]);
+  series.set("heatRules", [{
+    dataField: "valueX",
+    min: am5.color(0xe5dc36),
+    max: am5.color(0x5faa46),
+    target: series.columns.template,
+    key: "fill"
+  }]);
 
   series.data.setAll(chartData);
   yAxis.data.setAll(chartData);
 
   series.appear();
   chart.appear(1000, 100);
+
 });
 </script>
 </body>
