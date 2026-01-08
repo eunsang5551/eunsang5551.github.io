@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="utf-8" />
-  <title>Media Performance Dash</title>
+  <meta charset="UTF-8" />
+  <title>성과도 순위 비교</title>
 
-  <!-- amCharts 5 -->
-  <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
-  <script src="https://cdn.amcharts.com/lib/5/xy.js"></script>
-  <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
+  <!-- amCharts 4 -->
+  <script src="https://cdn.amcharts.com/lib/4/core.js"></script>
+  <script src="https://cdn.amcharts.com/lib/4/charts.js"></script>
+  <script src="https://cdn.amcharts.com/lib/4/themes/animated.js"></script>
 
   <style>
     body {
@@ -17,155 +17,88 @@
       width: 100%;
       height: 600px;
     }
+    h2 {
+      text-align: center;
+    }
   </style>
 </head>
-
 <body>
-  <h2 style="text-align:center;">성과도 순위 비교</h2>
-  <div id="chartdiv"></div>
 
-  <script>
-    /* ===============================
-       API (swagger.json 기준)
-       =============================== */
+<h2>성과도 순위 비교</h2>
+<div id="chartdiv"></div>
 
-    const API_URL =
-      "https://cors-anywhere.herokuapp.com/http://dev-web-api.newssalad.com:8083/analysis/press/total";
+<script>
+am4core.ready(async function () {
 
-    fetch(API_URL)
-      .then(res => res.json())
-      .then(json => {
-        const data = json.data.map(item => ({
-          press: item.press,                 // 언론사명
-          first: item.parentsNewsCnt,        // 최초보도
-          follow: item.sonNewsCnt            // 후속보도
-        }));
+  am4core.useTheme(am4themes_animated);
 
-        drawChart(data);
-      })
-      .catch(err => console.error("FETCH ERROR:", err));
+  const chart = am4core.create("chartdiv", am4charts.XYChart);
+  chart.padding(40, 40, 40, 40);
 
-    function drawChart(data) {
+  chart.legend = new am4charts.Legend();
+  chart.legend.position = "top";
 
-      am5.ready(function () {
+  // 🔹 CORS 프록시 + API
+  const API_URL =
+    "https://cors-anywhere.herokuapp.com/http://dev-web-api.newssalad.com:8083/document/analysis/press/total";
 
-        const root = am5.Root.new("chartdiv");
-        root.setThemes([am5themes_Animated.new(root)]);
+  try {
+    const res = await fetch(API_URL);
+    const json = await res.json();
 
-        const chart = root.container.children.push(
-          am5xy.XYChart.new(root, {
-            panX: false,
-            panY: false,
-            wheelX: "none",
-            wheelY: "none",
-            layout: root.verticalLayout
-          })
-        );
+    console.log("API RAW:", json);
 
-        /* ===============================
-           X Axis (언론사)
-           =============================== */
-        const xAxis = chart.xAxes.push(
-          am5xy.CategoryAxis.new(root, {
-            categoryField: "press",
-            renderer: am5xy.AxisRendererX.new(root, {
-              minGridDistance: 30
-            })
-          })
-        );
-        xAxis.data.setAll(data);
+    // 🔴 핵심 포인트
+    chart.data = json.data;
 
-        /* ===============================
-           Y Axis (건수)
-           =============================== */
-        const yAxis = chart.yAxes.push(
-          am5xy.ValueAxis.new(root, {
-            renderer: am5xy.AxisRendererY.new(root, {})
-          })
-        );
+    console.log("CHART DATA:", chart.data);
 
-        /* ===============================
-           최초보도 시리즈
-           =============================== */
-        const firstSeries = chart.series.push(
-          am5xy.ColumnSeries.new(root, {
-            name: "최초보도",
-            xAxis: xAxis,
-            yAxis: yAxis,
-            valueYField: "first",
-            categoryXField: "press",
-            clustered: true
-          })
-        );
-        firstSeries.data.setAll(data);
+  } catch (e) {
+    console.error("FETCH ERROR:", e);
+  }
 
-        firstSeries.columns.template.setAll({
-          fill: am5.color(0x4e79a7),
-          stroke: am5.color(0x4e79a7),
-          cornerRadiusTL: 6,
-          cornerRadiusTR: 6
-        });
+  // Y Axis (언론사)
+  const categoryAxis = chart.yAxes.push(new am4charts.CategoryAxis());
+  categoryAxis.dataFields.category = "pressName";
+  categoryAxis.renderer.grid.template.location = 0;
+  categoryAxis.renderer.inversed = true;
 
-        firstSeries.bullets.push(() =>
-          am5.Bullet.new(root, {
-            sprite: am5.Label.new(root, {
-              text: "{valueY}",
-              populateText: true,
-              centerX: am5.p50,
-              centerY: am5.p50,
-              fill: am5.color(0xffffff)
-            })
-          })
-        );
+  // X Axis (수치)
+  const valueAxis = chart.xAxes.push(new am4charts.ValueAxis());
+  valueAxis.min = 0;
 
-        /* ===============================
-           후속보도 시리즈
-           =============================== */
-        const followSeries = chart.series.push(
-          am5xy.ColumnSeries.new(root, {
-            name: "후속보도",
-            xAxis: xAxis,
-            yAxis: yAxis,
-            valueYField: "follow",
-            categoryXField: "press",
-            clustered: true
-          })
-        );
-        followSeries.data.setAll(data);
+  // 최초보도
+  const firstSeries = chart.series.push(new am4charts.ColumnSeries());
+  firstSeries.dataFields.valueX = "firstCount";
+  firstSeries.dataFields.categoryY = "pressName";
+  firstSeries.name = "최초보도";
+  firstSeries.stacked = true;
+  firstSeries.columns.template.tooltipText =
+    "{name}\n{categoryY}: {valueX}";
+  firstSeries.columns.template.width = am4core.percent(80);
 
-        followSeries.columns.template.setAll({
-          fill: am5.color(0xf28e2b),
-          stroke: am5.color(0xf28e2b),
-          cornerRadiusTL: 6,
-          cornerRadiusTR: 6
-        });
+  // 후속보도
+  const followSeries = chart.series.push(new am4charts.ColumnSeries());
+  followSeries.dataFields.valueX = "followCount";
+  followSeries.dataFields.categoryY = "pressName";
+  followSeries.name = "후속보도";
+  followSeries.stacked = true;
+  followSeries.columns.template.tooltipText =
+    "{name}\n{categoryY}: {valueX}";
+  followSeries.columns.template.width = am4core.percent(80);
 
-        followSeries.bullets.push(() =>
-          am5.Bullet.new(root, {
-            sprite: am5.Label.new(root, {
-              text: "{valueY}",
-              populateText: true,
-              centerX: am5.p50,
-              centerY: am5.p50,
-              fill: am5.color(0xffffff)
-            })
-          })
-        );
+  // 수치 라벨
+  const labelBullet1 = firstSeries.bullets.push(new am4charts.LabelBullet());
+  labelBullet1.label.text = "{valueX}";
+  labelBullet1.locationX = 0.5;
 
-        /* ===============================
-           Legend
-           =============================== */
-        const legend = chart.children.push(
-          am5.Legend.new(root, {
-            centerX: am5.p50,
-            x: am5.p50
-          })
-        );
-        legend.data.setAll(chart.series.values);
+  const labelBullet2 = followSeries.bullets.push(new am4charts.LabelBullet());
+  labelBullet2.label.text = "{valueX}";
+  labelBullet2.locationX = 0.5;
 
-        chart.appear(1000, 100);
-      });
-    }
-  </script>
+});
+</script>
+
 </body>
 </html>
+
